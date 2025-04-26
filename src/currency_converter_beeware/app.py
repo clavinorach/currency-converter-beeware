@@ -2,7 +2,6 @@ import toga
 from toga.style import Pack
 from toga.style.pack import COLUMN, ROW, CENTER
 
-# Enhanced exchange rates with more currencies (IDR base)
 EXCHANGE_RATES = {
     "USD": 0.000066,  # US Dollar
     "KWD": 0.000020,  # Kuwaiti Dinar
@@ -16,7 +15,6 @@ EXCHANGE_RATES = {
     "CNY": 0.00046,   # Chinese Yuan
 }
 
-# Display names mapped to exchange rates with symbols
 CURRENCY_MAP = {
     "US Dollar (USD)": "USD",
     "Kuwaiti Dinar (KWD)": "KWD",
@@ -350,7 +348,7 @@ class CurrencyConverterApp(toga.App):
         self._convert_to_foreign(amount)
 
     def _convert_to_foreign(self, amount):
-        """Convert Rupiah to foreign currency using hardcoded rates."""
+
         selection = self.currency_select.value
         code = CURRENCY_MAP[selection]
         rate = EXCHANGE_RATES.get(code)
@@ -368,7 +366,6 @@ class CurrencyConverterApp(toga.App):
         )
 
     def on_convert_to_idr(self, widget):
-        """Handler for converting foreign currencies to Rupiah."""
         try:
             amount = float(self.input_foreign.value.replace(",", "").replace(".", ""))
             if amount <= 0:
@@ -380,7 +377,6 @@ class CurrencyConverterApp(toga.App):
         self._convert_to_idr(amount)
 
     def _convert_to_idr(self, amount):
-        """Convert foreign currency to Rupiah using hardcoded rates."""
         selection = self.currency_select2.value
         code = CURRENCY_MAP[selection]
         rate = EXCHANGE_RATES.get(code)
