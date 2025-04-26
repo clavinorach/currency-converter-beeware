@@ -3,7 +3,16 @@
 A simple cross‑platform mobile currency converter built with BeeWare/Toga.  
 Convert between Indonesian Rupiah (IDR) and major foreign currencies in real time.
 
-![image](https://github.com/user-attachments/assets/ae2be38c-c5d0-4b49-8468-b2790fa19c2f)
+![Currency Converter](https://github.com/user-attachments/assets/f07c9c3e-eaf9-4b23-8326-24f02449f4e4)
+
+The "Currency Converter" application is developed using the BeeWare framework with the Toga library for its user interface. It allows users to convert currency values between Indonesian Rupiah (IDR) and various foreign currencies offline, based on fixed exchange rates predefined in the code. Upon opening the app, users can choose to convert from Rupiah to a foreign currency or vice versa by entering an amount, selecting a currency, and pressing the convert button to see the result, along with the applied exchange rate. The app does not update rates automatically from the internet, requiring manual updates in the code if needed. Designed with a clean and simple interface featuring large, colorful buttons and clear text, this application serves as a practical example of building an offline currency converter with BeeWare, featuring screen navigation, input validation, and real-time calculation without external API dependencies. 
+
+This application was developed as a requirement for the Tugas Besar 1 in the Mobile Programming course at Mercu Buana University by Group 2, consisting of the following members:
+- Clavino Ourizqi Rachmadi
+- Achmad Ardani Prasha
+- Nanda Garin Raditya
+- M. Zidane Alfarizi
+- Alika Syifa Ardabili
 
 
 ## Features
@@ -16,8 +25,7 @@ Convert between Indonesian Rupiah (IDR) and major foreign currencies in real tim
 ## Tech Stack
 
 - Python 3.8+  
-- BeeWare / Toga for UI  
-- HTTPX for async HTTP requests  
+- BeeWare / Toga for UI    
 - Briefcase for packaging to desktop/mobile platforms
 
 ## Prerequisites
