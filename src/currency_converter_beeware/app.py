@@ -563,29 +563,51 @@ class CurrencyConverterApp(toga.App):
     def _convert_to_idr(self, amount):
         selection = self.currency_select2.value
         code = CURRENCY_MAP[selection]
-        rate = self.get_exchange_rate(code)
+        rate = self.get_exchange_rate(code)  # This returns foreign/IDR
+        
+        print(f"Converting from {selection} to IDR, Rate for {selection}: {rate}")
         
         if rate is None:
             self.result_label2.text = f"Tidak tersedia kurs untuk {selection}!\nSilakan periksa koneksi internet Anda."
             return
         
-        converted = amount / rate
-        currency_symbol = selection.split("(")[-1].replace(")", "")
+        # Print the rate to debug
+        print(f"Rate for {code}: {rate}")
         
-        self.result_label2.text = (
-            f"{amount:,.2f} {currency_symbol} = {converted:,.0f} IDR\n"
-            f"Kurs: 1 {code} = {1/rate:,.0f} IDR"
-        )
-        
-        # Save the conversion to history
-        with db_session:
-            ConversionHistory(
-                from_currency=code,
-                to_currency="IDR",
-                amount=amount,
-                result=converted
+        try:
+            # Check if the rate is a valid number
+            if rate <= 0:
+                raise ValueError(f"Invalid rate {rate} for {selection}")
+            
+            # Convert using the correct rate directly
+            converted = amount * rate  # foreign * (foreign/IDR) = IDR
+            print(f"Amount: {amount} * {rate} = {converted}")
+            
+            # Format the result to avoid scientific notation
+            if converted < 1:
+                converted_str = f"{converted:,.6f}"  # Show up to 6 decimal places if the result is very small
+            else:
+                converted_str = f"{converted:,.0f}"  # Otherwise, round to nearest whole number
+            
+            currency_symbol = selection.split("(")[-1].replace(")", "")
+            
+            self.result_label2.text = (
+                f"{amount:,.2f} {currency_symbol} = {converted_str} IDR\n"
+                f"Kurs: 1 {code} = {rate:,.0f} IDR"
             )
-
+            
+            # Save to history
+            with db_session:
+                ConversionHistory(
+                    from_currency=code,
+                    to_currency="IDR",
+                    amount=amount,
+                    result=converted
+                )
+        
+        except Exception as e:
+            print(f"Error during conversion: {e}")
+            self.result_label2.text = "Terjadi kesalahan dalam konversi!"
 
 def main():
     return CurrencyConverterApp(
