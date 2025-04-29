@@ -1,1 +1,4 @@
 toga>=0.3.0
+pony
+requests
+python-dotenv
