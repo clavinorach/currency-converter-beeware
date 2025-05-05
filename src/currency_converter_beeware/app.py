@@ -4,12 +4,8 @@ from toga.style.pack import COLUMN, ROW, CENTER
 import os
 from datetime import datetime, timedelta
 from pony.orm import Database, Required, PrimaryKey, db_session, select, desc
-from dotenv import load_dotenv
 import requests
 import json
-
-# Load environment variables from the .env file
-load_dotenv()
 
 # Configure the database
 db = Database()
@@ -28,7 +24,7 @@ class ExchangeRate(db.Entity):
     last_updated = Required(datetime, default=datetime.now)
 
 # API configuration
-API_BASE_URL = os.getenv("API_BASE_URL")
+API_BASE_URL= ""
 # Get API Key at https://www.exchangerate-api.com/
 
 CURRENCY_MAP = {
@@ -88,8 +84,8 @@ class CurrencyConverterApp(toga.App):
                     # Update all supported currencies
                     for display_name, code in CURRENCY_MAP.items():
                         if code in rates and code != 'IDR':
-                            # API returns IDR to foreign, we need to invert for our storage
-                            rate = 1 / rates[code]
+                            # Store the rate as foreign/IDR (how much foreign currency you get for 1 IDR)
+                            rate = rates[code]
                             
                             # Update or create the rate
                             rate_obj = ExchangeRate.get(currency_code=code)
@@ -526,18 +522,22 @@ class CurrencyConverterApp(toga.App):
     def _convert_to_foreign(self, amount):
         selection = self.currency_select.value
         code = CURRENCY_MAP[selection]
-        rate = self.get_exchange_rate(code)
+        rate = self.get_exchange_rate(code) 
         
         if rate is None:
             self.result_label.text = f"Tidak tersedia kurs untuk {selection}!\nSilakan periksa koneksi internet Anda."
             return
         
+        # Convert IDR to foreign: amount (IDR) * rate (foreign/IDR) = foreign amount
         converted = amount * rate
         currency_symbol = selection.split("(")[-1].replace(")", "")
         
+        # Calculate the inverse rate for display (how much IDR per 1 foreign)
+        inverse_rate = 1 / rate if rate != 0 else 0
+        
         self.result_label.text = (
             f"{amount:,.0f} IDR = {converted:,.2f} {currency_symbol}\n"
-            f"Kurs: 1 IDR = {rate:.6f} {code}"
+            f"Kurs: 1 {code} = {inverse_rate:,.0f} IDR"
         )
         
         # Save the conversion to history
@@ -548,6 +548,7 @@ class CurrencyConverterApp(toga.App):
                 amount=amount,
                 result=converted
             )
+
 
     def on_convert_to_idr(self, widget):
         try:
@@ -563,51 +564,32 @@ class CurrencyConverterApp(toga.App):
     def _convert_to_idr(self, amount):
         selection = self.currency_select2.value
         code = CURRENCY_MAP[selection]
-        rate = self.get_exchange_rate(code)  # This returns foreign/IDR
-        
-        print(f"Converting from {selection} to IDR, Rate for {selection}: {rate}")
+        rate = self.get_exchange_rate(code)  
         
         if rate is None:
             self.result_label2.text = f"Tidak tersedia kurs untuk {selection}!\nSilakan periksa koneksi internet Anda."
             return
         
-        # Print the rate to debug
-        print(f"Rate for {code}: {rate}")
+        # Convert foreign to IDR: amount (foreign) / rate (foreign/IDR) = IDR amount
+        converted = amount / rate
+        currency_symbol = selection.split("(")[-1].replace(")", "")
         
-        try:
-            # Check if the rate is a valid number
-            if rate <= 0:
-                raise ValueError(f"Invalid rate {rate} for {selection}")
-            
-            # Convert using the correct rate directly
-            converted = amount * rate  # foreign * (foreign/IDR) = IDR
-            print(f"Amount: {amount} * {rate} = {converted}")
-            
-            # Format the result to avoid scientific notation
-            if converted < 1:
-                converted_str = f"{converted:,.6f}"  # Show up to 6 decimal places if the result is very small
-            else:
-                converted_str = f"{converted:,.0f}"  # Otherwise, round to nearest whole number
-            
-            currency_symbol = selection.split("(")[-1].replace(")", "")
-            
-            self.result_label2.text = (
-                f"{amount:,.2f} {currency_symbol} = {converted_str} IDR\n"
-                f"Kurs: 1 {code} = {rate:,.0f} IDR"
+        # Calculate the inverse rate for display (how much IDR per 1 foreign)
+        inverse_rate = 1 / rate if rate != 0 else 0
+        
+        self.result_label2.text = (
+            f"{amount:,.2f} {currency_symbol} = {converted:,.0f} IDR\n"
+            f"Kurs: 1 {code} = {inverse_rate:,.0f} IDR"
+        )
+        
+        # Save to history
+        with db_session:
+            ConversionHistory(
+                from_currency=code,
+                to_currency="IDR",
+                amount=amount,
+                result=converted
             )
-            
-            # Save to history
-            with db_session:
-                ConversionHistory(
-                    from_currency=code,
-                    to_currency="IDR",
-                    amount=amount,
-                    result=converted
-                )
-        
-        except Exception as e:
-            print(f"Error during conversion: {e}")
-            self.result_label2.text = "Terjadi kesalahan dalam konversi!"
 
 def main():
     return CurrencyConverterApp(
