@@ -48,7 +48,6 @@ class CurrencyConverterApp(toga.App):
         # Setup database
         self.setup_database()
             
-        # Try to update rates from API
         self.update_exchange_rates_from_api()
             
         self.main_window = toga.MainWindow(
@@ -59,15 +58,33 @@ class CurrencyConverterApp(toga.App):
         self.main_window.show()
 
     def setup_database(self):
-        """Set up the database connection."""
-        # Get the app's data directory
-        data_dir = self.paths.data
-        if not os.path.exists(data_dir):
-            os.makedirs(data_dir)
+        """Set up the database connection in the project folder"""
+        try:
+            project_dir = os.path.dirname(os.path.abspath(__file__))
+            data_dir = os.path.join(project_dir, 'data')
             
-        db_path = os.path.join(data_dir, 'currency_converter.sqlite')
-        db.bind(provider='sqlite', filename=db_path, create_db=True)
-        db.generate_mapping(create_tables=True)
+            if not os.path.exists(data_dir):
+                os.makedirs(data_dir)
+                print(f"Created data directory: {data_dir}")
+            
+            db_path = os.path.join(data_dir, 'currency_converter.sqlite')
+            print(f"Database will be stored at: {db_path}")
+            
+            # Bind database
+            db.bind(provider='sqlite', filename=db_path, create_db=True)
+            db.generate_mapping(create_tables=True)
+            
+            # Test connection
+            with db_session:
+                count = select(h for h in ConversionHistory).count()
+                print(f"Database initialized with {count} records")
+                
+            return True
+            
+        except Exception as e:
+            print(f"Database setup failed: {str(e)}")
+            return False
+
     
     def update_exchange_rates_from_api(self):
         """Update exchange rates from API."""
@@ -84,7 +101,6 @@ class CurrencyConverterApp(toga.App):
                     # Update all supported currencies
                     for display_name, code in CURRENCY_MAP.items():
                         if code in rates and code != 'IDR':
-                            # Store the rate as foreign/IDR (how much foreign currency you get for 1 IDR)
                             rate = rates[code]
                             
                             # Update or create the rate
